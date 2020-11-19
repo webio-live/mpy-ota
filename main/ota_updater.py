@@ -92,9 +92,15 @@ class OTAUpdater:
         print('\tLatest version: ', latest_version)
         if latest_version > current_version:
             print('Updating...')
-            os.mkdir(self.modulepath('next'))
+
+            try:
+                os.mkdir(self.modulepath('next'))
+            except OSError:
+                pass
+
             self.download_all_files(
-                self.github_repo + '/contents/' + self.main_dir, latest_version)
+                # self.github_repo + '/contents/' + self.main_dir, latest_version) modified by Adam
+                self.github_repo + '/contents/', latest_version)
             with open(self.modulepath('next/.version'), 'w') as versionfile:
                 versionfile.write(latest_version)
                 versionfile.close()
@@ -123,15 +129,17 @@ class OTAUpdater:
     def get_latest_version(self):
         latest_release = self.http_client.get(
             self.github_repo + '/releases/latest')
-        # self.github_repo + '/releases/tag/0.2.0')
+
         version = latest_release.json()['tag_name']
         latest_release.close()
         return version
 
     def download_all_files(self, root_url, version):
-        file_list = self.http_client.get(
-            root_url + '?ref=refs/tags/' + version)
+        download_url = root_url + '?ref=refs/tags/' + version
+        print(download_url)
+        file_list = self.http_client.get(download_url)
         for file in file_list.json():
+            print(file)
             if file['type'] == 'file':
                 download_url = file['download_url']
                 download_path = self.modulepath(
