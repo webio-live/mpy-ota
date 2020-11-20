@@ -15,7 +15,7 @@ class OTAUpdater:
             '/').replace('https://github.com', 'https://api.github.com/repos')
         self.main_dir = main_dir
         self.module = module.rstrip('/')
-        print(os.listdir())
+        print('çtor modified')
 
     @staticmethod
     def using_network(ssid, password):
