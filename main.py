@@ -13,7 +13,7 @@ def download_and_install_update_if_available():
 
 
 def start():
-    print("start")
+    print("start updated")
 
 
 def boot():
