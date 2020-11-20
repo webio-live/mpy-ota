@@ -15,7 +15,7 @@ class OTAUpdater:
             '/').replace('https://github.com', 'https://api.github.com/repos')
         self.main_dir = main_dir
         self.module = module.rstrip('/')
-        # print(os.listdir('./next'))
+        print(os.listdir())
 
     @staticmethod
     def using_network(ssid, password):
@@ -38,7 +38,12 @@ class OTAUpdater:
         print('\tLatest version: ', latest_version)
         if latest_version > current_version:
             print('New version available, will download and install on next reboot')
-            os.mkdir(self.modulepath('next'))
+            try:
+                self.rmtree(self.modulepath('next'))
+                os.mkdir(self.modulepath('next'))
+            except OSError:
+                pass
+
             with open(self.modulepath('next/.version_on_reboot'), 'w') as versionfile:
                 versionfile.write(latest_version)
                 versionfile.close()
@@ -94,22 +99,37 @@ class OTAUpdater:
             print('Updating...')
 
             try:
+                self.rmtree(self.modulepath('next'))
                 os.mkdir(self.modulepath('next'))
             except OSError:
                 pass
 
             self.download_all_files(
-                # self.github_repo + '/contents/' + self.main_dir, latest_version) modified by Adam
                 self.github_repo + '/contents/', latest_version)
+            # self.github_repo + '/contents/' + self.main_dir, latest_version) modified by Adam
+            print('next')
+
             with open(self.modulepath('next/.version'), 'w') as versionfile:
+                print(latest_version)
                 versionfile.write(latest_version)
                 versionfile.close()
+                self.rmtree(self.modulepath(self.main_dir))
 
+                # os.rename(self.modulepath('next/.version_on_reboot'),
+                #           self.modulepath('next/.version'))
+                os.rename(self.modulepath('next'),
+                          self.modulepath(self.main_dir))
+
+                print(os.listdir())
+                print('Update installed (', latest_version, '), will reboot now')
+                machine.reset()
             return True
+
         return False
 
     def rmtree(self, directory):
         for entry in os.ilistdir(directory):
+            print('entry ', entry)
             is_dir = entry[1] == 0x4000
             if is_dir:
                 self.rmtree(directory + '/' + entry[0])
@@ -136,10 +156,8 @@ class OTAUpdater:
 
     def download_all_files(self, root_url, version):
         download_url = root_url + '?ref=refs/tags/' + version
-        print(download_url)
         file_list = self.http_client.get(download_url)
         for file in file_list.json():
-            print(file)
             if file['type'] == 'file':
                 download_url = file['download_url']
                 download_path = self.modulepath(
@@ -149,13 +167,21 @@ class OTAUpdater:
             elif file['type'] == 'dir':
                 path = self.modulepath(
                     'next/' + file['path'].replace(self.main_dir + '/', ''))
-                os.mkdir(path)
+                try:
+                    self.rmtree(path)
+                    os.mkdir(path)
+                except OSError:
+                    print('error')
+                    pass
+
                 self.download_all_files(root_url + '/' + file['name'], version)
 
         file_list.close()
+        print('DOWNLOAD COMPLETED')
 
     def download_file(self, url, path):
         print('\tDownloading: ', path)
+
         with open(path, 'w') as outfile:
             try:
                 response = self.http_client.get(url)
@@ -164,9 +190,11 @@ class OTAUpdater:
                 response.close()
                 outfile.close()
                 gc.collect()
+        print('\tDownloading completed: ', path)
 
     def modulepath(self, path):
-        return self.module + '/' + path if self.module else path
+        return path
+        # return self.module + '/' + path if self.module else path
 
 
 class Response:
@@ -204,7 +232,6 @@ class Response:
 class HttpClient:
 
     def __init__(self, headers={}):
-        print(headers)
         self._headers = headers
 
     def request(self, method, url, data=None, json=None, headers={}, stream=None):

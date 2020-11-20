@@ -9,11 +9,11 @@ def download_and_install_update_if_available():
 
     o.using_network('.', 'Q1w2e3r4t5')
     o.download_updates_if_available()
-    o.download_and_install_update_if_available('.', 'Q1w2e3r4t5')
+    # o.download_and_install_update_if_available('.', 'Q1w2e3r4t5')
 
 
 def start():
-    print("start again with a new update")
+    print("start")
 
 
 def boot():
