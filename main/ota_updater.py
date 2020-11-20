@@ -89,6 +89,7 @@ class OTAUpdater:
             print('No pending update found')
 
     def download_updates_if_available(self):
+
         current_version = self.get_version(self.modulepath(self.main_dir))
         latest_version = self.get_latest_version()
 
@@ -98,11 +99,7 @@ class OTAUpdater:
         if latest_version > current_version:
             print('Updating...')
 
-            try:
-                self.rmtree(self.modulepath('next'))
-                os.mkdir(self.modulepath('next'))
-            except OSError:
-                pass
+            os.mkdir(self.modulepath('next'))
 
             self.download_all_files(
                 self.github_repo + '/contents/', latest_version)
